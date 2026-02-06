@@ -38,12 +38,5 @@ y: 456
 ```
 In little Bobby's kit's instructions booklet (provided as your puzzle input), **what signal is ultimately provided to wire a?**
 
-```
-x 0000000001111011 123
-y 0000000111001000 456
-d 0000000001001001  72
-e 0000000111111011 507
-f 0000000111101100 492
-g 0000000001110010 114
-h 1111111110000100 yada yada 
-```
+# Part Two
+Now, take the signal you got on wire a, override wire b to that signal, and reset the other wires (including wire a). **What new signal is ultimately provided to wire a?**

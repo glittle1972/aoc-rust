@@ -28,6 +28,8 @@ lazy_static! {
 fn main() {
     let res1 = part1("input.txt", "a");
     println!("Result 1 is {}", res1);
+    let res2 = part1("input2.txt", "a");
+    println!("Result 2 is {}", res2);
 }
 
 fn part1(filepath: &str, target: &str) -> u16 {
