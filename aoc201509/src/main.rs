@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::cmp::{min,max};
 use std::collections::{HashMap,HashSet};
 use std::fs;
 
@@ -9,11 +9,12 @@ use itertools::Itertools;
  */
 
 fn main() {
-    let res1 = part1("input.txt");
-    println!("Result 1 is {}", res1);
+    let (min, max) = part1("input.txt");
+    println!("min is {}", min);
+    println!("max is {}", max);
 }
 
-fn part1(filepath: &str) -> u16 {
+fn part1(filepath: &str) -> (u16,u16) {
     let mut edges = HashMap::new();
     let mut vertices = HashSet::new();
 
@@ -29,7 +30,8 @@ fn part1(filepath: &str) -> u16 {
     }
     dbg!(&edges);
 
-    let mut result = std::u16::MAX;
+    let mut mn = std::u16::MAX;
+    let mut mx = std::u16::MIN;
 
     // Create all permutations of verticies. This is going to be n!
     // This could probably be halved as the graph is undirected but let's
@@ -37,10 +39,11 @@ fn part1(filepath: &str) -> u16 {
     let perms = vertices.iter().permutations(vertices.len());
     for perm in perms.clone() {
         let d = get_distance(&edges, perm);
-        result = min(result, d);
-        println!("Current shortest is {}", result);
+        mn = min(mn, d);
+        mx = max(mx, d);
+        println!("Current shortest and longest are {} and {}", mn, mx);
     }
-    return result;
+    return (mn, mx);
 }
 
 fn get_distance(edges: &HashMap<String, u16>, path: Vec<&String>) -> u16 {
@@ -73,8 +76,9 @@ mod tests {
 
     #[test]
     fn test1() {
-        let res = part1("test.txt");
-        assert_eq!(605, res);
+        let (min, max) = part1("test.txt");
+        assert_eq!(605, min);
+        assert_eq!(982, max);
     }
 
 }
