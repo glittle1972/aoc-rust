@@ -8,14 +8,20 @@ lazy_static! {
 fn main() {
     let result = part1("1113222113", 40);
     println!("Result is {} with length {}", result, result.len());
+    let result2 = part1("1113222113", 50);
+    println!("Result 2 is {} with length {}", result2, result2.len());
 }
 
 fn part1(input: &str, iter: usize) -> String {
     let mut result = String::from(input);
-    for _ in 0..iter {
-        print!("{} becomes ", result);
+    for i in 0..iter {
+        if i < 10 {
+            print!("{} becomes ", result);
+        }
         result = parse(result);
-        println!("{}", result);
+        if i < 10 {
+            println!("{}", result);
+        }
     }
     return result;
 }
