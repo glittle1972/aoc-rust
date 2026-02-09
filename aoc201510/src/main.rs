@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -8,20 +10,17 @@ lazy_static! {
 fn main() {
     let result = part1("1113222113", 40);
     println!("Result is {} with length {}", result, result.len());
+    let start = Instant::now();
     let result2 = part1("1113222113", 50);
     println!("Result 2 is {} with length {}", result2, result2.len());
+    let dur = start.elapsed();
+    println!("Duration = {:?}", dur);
 }
 
 fn part1(input: &str, iter: usize) -> String {
     let mut result = String::from(input);
-    for i in 0..iter {
-        if i < 10 {
-            print!("{} becomes ", result);
-        }
+    for _ in 0..iter {
         result = parse(result);
-        if i < 10 {
-            println!("{}", result);
-        }
     }
     return result;
 }
@@ -29,18 +28,17 @@ fn part1(input: &str, iter: usize) -> String {
 fn parse(input: String) -> String {
     let mut result = String::new();
     
-    let matches: Vec<_> = re.find_iter(&input).map(|m| m.as_str()).collect();
-    for mtch in matches {
-        let exp = expand(mtch);
-        result = format!("{}{}", result, exp);
+    for m in re.find_iter(&input) {
+        expand(m.as_str(), &mut result);
     }
     return result;
 }
 
-fn expand(expr: &str) -> String {
+fn expand(expr: &str, result: &mut String) {
     let len = expr.len();
     let num = expr.chars().next().unwrap_or('0');
-    return format!("{}{}", len, num);
+    use std::fmt::Write;
+    let _ = write!(result, "{}{}", len, num);
 }
 
 #[cfg(test)]
@@ -56,7 +54,8 @@ mod tests {
 
     #[test]
     fn test111() {
-        let result = expand("111");
+        let mut result = String::new();
+        expand("111", &mut result);
         assert_eq!("31", result);
     }
 }
