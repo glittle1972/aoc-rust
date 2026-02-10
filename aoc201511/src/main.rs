@@ -11,24 +11,25 @@ static PAIR: [&str; 23] = [
     "uu", "vv", "ww", "xx", "yy", "zz" ];
 static IOL: [&str; 3] = [ "i", "o", "l" ];
 fn main() {
-    let start = Instant::now();
-
     let mut password = String::from("hepxcrrq");
     part1(&mut password);
     println!("New password is {} ", password);
-
-    let dur = start.elapsed();
-    println!("Duration = {:?}", dur);
+    part1(&mut password);
+    println!("Next password is {} ", password);
 }
 
 fn part1(input: &mut String) {
-    
+    let start = Instant::now();
+
     loop {
         increment(input);
         if !test_iol(input) && test_three(input) && test_pair(input) {
             break;
         }
     }
+
+    let dur = start.elapsed();
+    println!("Duration = {:?}", dur);
 }
 
 fn increment(password: &mut String) {
