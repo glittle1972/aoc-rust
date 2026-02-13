@@ -1,6 +1,7 @@
 use std::cmp::max;
 use std::collections::{HashMap,HashSet};
 use std::fs;
+use std::time::Instant;
 
 use itertools::Itertools;
 use regex::Regex;
@@ -18,9 +19,13 @@ use regex::Regex;
 fn main() {
     let result1 = part1("input.txt");
     println!("result1 is {}", result1);
+    let result2 = part1("input2.txt");
+    println!("result2 is {}", result2);
 }
 
 fn part1(filepath: &str) -> i32 {
+    let start = Instant::now();
+
     let mut edges: HashMap<String, i32> = HashMap::new();
     let mut vertices: HashSet<String> = HashSet::new();
 
@@ -28,7 +33,6 @@ fn part1(filepath: &str) -> i32 {
         .expect("Could not read file");
     
     parse_lines(contents, &mut edges, &mut vertices);
-    dbg!(&edges);
 
     let mut mx = std::i32::MIN;
 
@@ -42,11 +46,15 @@ fn part1(filepath: &str) -> i32 {
         mx = max(mx, d);
         println!("Current happiness is {}", mx);
     }
+
+    let dur = start.elapsed();
+    println!("Duration = {:?}", dur);
+
     return mx;
 }
 
 fn parse_lines(lines: String, edges: &mut HashMap<String, i32>, vertices: &mut HashSet<String>) {
-    let re = Regex::new(r"(?<v1>[A-Z][a-z]+) would (?<op>[a-z]+) (?<val>[0-9]+) happiness units by sitting next to (?<v2>[A-Z][a-z]+)").unwrap();
+    let re = Regex::new(r"(?<v1>[A-Z][a-z]*) would (?<op>[a-z]+) (?<val>[0-9]+) happiness units by sitting next to (?<v2>[A-Z][a-z]+)").unwrap();
     for line in lines.lines() {
         let caps = re.captures(line).unwrap();
         let v1 = String::from(&caps["v1"][..1]);
