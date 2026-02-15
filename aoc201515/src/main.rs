@@ -11,15 +11,17 @@ struct Ingredient {
     durability: i32,
     flavor: i32,
     texture: i32,
-    _calories: i32
+    calories: i32
 }
 
 fn main() {
-    let result1 = part1("input.txt", 100);
+    let result1 = part1("input.txt", 100, false);
     println!("result1 is {}", result1);
+    let result2 = part1("input.txt", 100, true);
+    println!("result2 is {}", result2);
 }
 
-fn part1(filepath: &str, tsps: usize) -> i32 {
+fn part1(filepath: &str, tsps: usize, calorie_limit: bool) -> i32 {
     let start = Instant::now();
 
     let mut ingredients: Vec<Ingredient> = vec![];
@@ -31,7 +33,7 @@ fn part1(filepath: &str, tsps: usize) -> i32 {
 
     let mut combination: Vec<usize> = vec![];
     let mut best = 0;
-    evaluate_ingredients(&ingredients, tsps, &mut combination, &mut best);
+    evaluate_ingredients(&ingredients, tsps, &mut combination, &mut best, calorie_limit);
 
     let dur = start.elapsed();
     println!("Duration = {:?}", dur);
@@ -49,8 +51,8 @@ fn parse_lines(lines: String, ingredients: &mut Vec<Ingredient>) {
         let durability = caps["dur"].parse::<i32>().unwrap();
         let flavor = caps["flav"].parse::<i32>().unwrap();
         let texture = caps["tex"].parse::<i32>().unwrap();
-        let _calories = caps["cal"].parse::<i32>().unwrap();
-        ingredients.push(Ingredient { _name, capacity, durability, flavor, texture, _calories });
+        let calories = caps["cal"].parse::<i32>().unwrap();
+        ingredients.push(Ingredient { _name, capacity, durability, flavor, texture, calories });
     }
 }
 
@@ -62,12 +64,12 @@ fn parse_lines(lines: String, ingredients: &mut Vec<Ingredient>) {
  * There might be some caching we can do later - there will be some repition of
  * quantities of pairs of ingredients.
  */
-fn evaluate_ingredients(ingredients: &[Ingredient], tsps: usize, combination: &mut Vec<usize>, best: &mut i32) {
+fn evaluate_ingredients(ingredients: &[Ingredient], tsps: usize, combination: &mut Vec<usize>, best: &mut i32, calorie_limit: bool) {
 
     // What's our stop condition? combination has one space left
     if ingredients.len() - combination.len() == 1 {
         combination.push(tsps);
-        let score = calc_score(ingredients, combination);
+        let score = calc_score(ingredients, combination, calorie_limit);
         *best = max(*best, score);
         combination.pop();
     } else {
@@ -78,17 +80,18 @@ fn evaluate_ingredients(ingredients: &[Ingredient], tsps: usize, combination: &m
         for i in 0..tsps + 1 - rem {
             combination.push(i + 1);
             let remaining_tsps = tsps - (i + 1);
-            evaluate_ingredients(ingredients, remaining_tsps, combination, best);
+            evaluate_ingredients(ingredients, remaining_tsps, combination, best, calorie_limit);
             combination.pop();
         }
     }
 }
 
-fn calc_score(ingredients: &[Ingredient], combination: &[usize]) -> i32 {
+fn calc_score(ingredients: &[Ingredient], combination: &[usize], calorie_limit: bool) -> i32 {
     let mut capacity: i32 = 0;
     let mut durability: i32 = 0;
     let mut flavor: i32 = 0;
     let mut texture: i32 = 0;
+    let mut calories = 0;
     for index in 0..ingredients.len() {
         let i = &ingredients[index];
         let q = combination[index] as i32;
@@ -96,11 +99,18 @@ fn calc_score(ingredients: &[Ingredient], combination: &[usize]) -> i32 {
         durability += i.durability * q;
         flavor += i.flavor * q;
         texture += i.texture * q;
+        calories += i.calories * q;
     }
+
+    if calorie_limit && calories != 500 {
+        return 0;
+    }
+
     capacity = max(capacity, 0);
     durability = max(durability, 0);
     flavor = max(flavor, 0);
     texture = max(texture, 0);
+
     let result = capacity * durability * flavor * texture;
     println!("Score for {:?} is {}", combination, result);
     return result;
@@ -112,8 +122,14 @@ mod tests {
 
     #[test]
     fn test1() {
-        let result1= part1("test.txt", 100);
+        let result1= part1("test.txt", 100, false);
         assert_eq!(62842880, result1);
+    }
+
+        #[test]
+    fn test2() {
+        let result1= part1("test.txt", 100, true);
+        assert_eq!(57600000 , result1);
     }
 
 }
