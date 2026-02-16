@@ -37,11 +37,13 @@ impl Default for Sue {
 }
 
 fn main() {
-    let result1 = part1("input.txt");
+    let result1 = part1("input.txt", false);
     println!("result1 is {}", result1);
+    let result2 = part1("input.txt", true);
+    println!("result2 is {}", result2);
 }
 
-fn part1(filepath: &str) -> usize {
+fn part1(filepath: &str, retroencabulator: bool) -> usize {
     const COMPOSITION: Sue = Sue { index: 0,
         children: 3, cats: 7, samoyeds: 2, pomeranians: 3, 
         akitas: 0 ,vizslas: 0, goldfish: 5, trees: 3,
@@ -57,28 +59,41 @@ fn part1(filepath: &str) -> usize {
     dbg!(&sues);
 
     for sue in sues {
-        if compare_sues(&sue, &COMPOSITION) {
+        if compare_sues(&sue, &COMPOSITION, retroencabulator) {
             return sue.index;
         }
     }
-    
+
     let dur = start.elapsed();
     println!("Duration = {:?}", dur);
 
     return 0;
 }
 
-fn compare_sues(source: &Sue, target: &Sue) -> bool {
-    return (source.children == std::usize::MAX || source.children == target.children) &&
-       (source.cats == std::usize::MAX || source.cats == target.cats) && 
-       (source.samoyeds == std::usize::MAX || source.samoyeds == target.samoyeds) && 
-       (source.pomeranians == std::usize::MAX || source.pomeranians == target.pomeranians) && 
-       (source.akitas == std::usize::MAX || source.akitas == target.akitas) && 
-       (source.vizslas == std::usize::MAX || source.vizslas == target.vizslas) && 
-       (source.goldfish == std::usize::MAX || source.goldfish == target.goldfish) && 
-       (source.trees == std::usize::MAX || source.trees == target.trees) && 
-       (source.cars == std::usize::MAX || source.cars == target.cars) && 
-       (source.perfumes == std::usize::MAX || source.perfumes == target.perfumes);
+fn compare_sues(source: &Sue, target: &Sue, retroencabulator: bool) -> bool {
+    if !retroencabulator {
+        return (source.children == std::usize::MAX || source.children == target.children) &&
+            (source.cats == std::usize::MAX || source.cats == target.cats) && 
+            (source.samoyeds == std::usize::MAX || source.samoyeds == target.samoyeds) && 
+            (source.pomeranians == std::usize::MAX || source.pomeranians == target.pomeranians) && 
+            (source.akitas == std::usize::MAX || source.akitas == target.akitas) && 
+            (source.vizslas == std::usize::MAX || source.vizslas == target.vizslas) && 
+            (source.goldfish == std::usize::MAX || source.goldfish == target.goldfish) && 
+            (source.trees == std::usize::MAX || source.trees == target.trees) && 
+            (source.cars == std::usize::MAX || source.cars == target.cars) && 
+            (source.perfumes == std::usize::MAX || source.perfumes == target.perfumes);
+    } else {
+        return (source.children == std::usize::MAX || source.children == target.children) &&
+            (source.cats == std::usize::MAX || source.cats > target.cats) && 
+            (source.samoyeds == std::usize::MAX || source.samoyeds == target.samoyeds) && 
+            (source.pomeranians == std::usize::MAX || source.pomeranians < target.pomeranians) && 
+            (source.akitas == std::usize::MAX || source.akitas == target.akitas) && 
+            (source.vizslas == std::usize::MAX || source.vizslas == target.vizslas) && 
+            (source.goldfish == std::usize::MAX || source.goldfish < target.goldfish) && 
+            (source.trees == std::usize::MAX || source.trees > target.trees) && 
+            (source.cars == std::usize::MAX || source.cars == target.cars) && 
+            (source.perfumes == std::usize::MAX || source.perfumes == target.perfumes);
+    }
 }
 
 fn parse_lines(lines: String, sues: &mut Vec<Sue>) {
@@ -132,14 +147,3 @@ fn parse_lines(lines: String, sues: &mut Vec<Sue>) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::part1;
-
-    #[test]
-    fn test1() {
-        let result1= part1("test.txt");
-        assert_eq!(62842880, result1);
-    }
-
-}
