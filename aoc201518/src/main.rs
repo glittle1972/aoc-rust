@@ -61,7 +61,7 @@ impl Matrix {
         return count;
     }
 
-    pub fn iterate(&mut self) {
+    pub fn iterate(&mut self, part2: bool) {
         let mut new_array = vec!['.'; self.height * self.width];
         for r in 0..self.height {
             for c in 0..self.width {
@@ -75,6 +75,14 @@ impl Matrix {
                 }
             }
         }
+        // If it's part2, set the corners to on
+        if part2 {
+            new_array[0] = '#';
+            new_array[self.width - 1] = '#';
+            new_array[(self.height - 1) * self.width] = '#';
+            new_array[self.height * self.width - 1] = '#';
+        }
+
         for i in 0..self.array.len() {
             self.array[i] = new_array[i];
         }
@@ -104,11 +112,13 @@ impl fmt::Debug for Matrix {
 }
 
 fn main() {
-    let num_lights = part1("input.txt", 100);
+    let num_lights = part1("input.txt", 100, false);
     println!("result1 is {}", num_lights);
+    let num_lights2 = part1("input.txt", 100, true);
+    println!("result2 is {}", num_lights2);
 }
 
-fn part1(filepath: &str, iterations: usize) -> u32 {
+fn part1(filepath: &str, iterations: usize, part2: bool) -> u32 {
     let start = Instant::now();
 
     let contents = fs::read_to_string(filepath)
@@ -117,7 +127,7 @@ fn part1(filepath: &str, iterations: usize) -> u32 {
     dbg!(&matrix);
 
     for _ in 0..iterations {
-        matrix.iterate();
+        matrix.iterate(part2);
         dbg!(&matrix);
     }
     let num_lights = matrix.num_lights();
@@ -146,8 +156,14 @@ mod tests {
 
     #[test]
     fn test1() {
-        let num_lights = part1("test.txt", 4);
+        let num_lights = part1("test.txt", 4, false);
         assert_eq!(4, num_lights);
+    }
+
+    #[test]
+    fn test2() {
+        let num_lights = part1("test2.txt", 5, true);
+        assert_eq!(17, num_lights);
     }
 
 }
