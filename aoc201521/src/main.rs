@@ -39,7 +39,7 @@ fn battle(player1: &mut Player, player2: &mut Player) -> bool {
     }
 }
 
-fn part1() -> i32 {
+fn part1() -> (i32, i32) {
     let start = Instant::now();
 
     const BOSS: Player = Player { cost: 0, hp: 100, damage: 8, armor: 2 };
@@ -72,7 +72,7 @@ fn part1() -> i32 {
     ];
 
     // Four loops to determien each combination
-    let mut minimum_cost = i32::MAX;
+    let (mut minimum_cost, mut maximum_cost) = (i32::MAX, i32::MIN);
     for weapon in weapons {
         for armor in &armors {
             for r1 in 0..rings.len() - 1 {
@@ -88,6 +88,8 @@ fn part1() -> i32 {
                     let mut player2 = Player { cost: BOSS.cost, hp: BOSS.hp, damage: BOSS.damage, armor: BOSS.armor };
                     if battle(&mut player1, &mut player2) {
                         minimum_cost = min(minimum_cost, player1.cost);
+                    } else {
+                        maximum_cost = max(maximum_cost, player1.cost);
                     }
                 }
             }
@@ -97,11 +99,12 @@ fn part1() -> i32 {
     let dur = start.elapsed();
     println!("Duration = {:?}", dur);
 
-    return minimum_cost;
+    return (minimum_cost, maximum_cost);
 }
 
 fn main() {
-    let gold = part1();
-    println!("result1 is {}", gold);
+    let (min, max) = part1();
+    println!("min to win is {}", min);
+    println!("max to lose is {}", max);
 }
 
