@@ -86,8 +86,16 @@ fn effect(level: usize, player: &mut Player, boss: &mut Boss, active_spells: &mu
     active_spells.retain(|s| s.duration > 0);
 }
 
-fn battle(level: usize, player: &mut Player, boss: &mut Boss, active_spells: &mut Vec<Spell>, spells: &Vec<Spell>, spent: &mut i32, minimum_spend: &mut i32) {
+fn battle(level: usize, part2: bool, player: &mut Player, boss: &mut Boss, active_spells: &mut Vec<Spell>, spells: &Vec<Spell>, spent: &mut i32, minimum_spend: &mut i32) {
     println!("{}. New round: {:?} vs {:?}, ", level, player, boss);
+
+    if part2 {
+        player.hp -= 1;
+        if player.hp <= 0 { 
+            println!("{}. Boss won! (Player died on hard mode)", level);
+            return;
+        }
+    }
 
     // First - apply any active spells
     effect(level, player, boss, active_spells);
@@ -133,12 +141,12 @@ fn battle(level: usize, player: &mut Player, boss: &mut Boss, active_spells: &mu
             }
 
             // Both still alive, have another round
-            battle(level + 1, &mut new_player, &mut new_boss, &mut new_active, spells, &mut new_spent, minimum_spend);
+            battle(level + 1, part2, &mut new_player, &mut new_boss, &mut new_active, spells, &mut new_spent, minimum_spend);
         }
     }
 }
 
-fn part1(init_player: &Player, init_boss: &Boss) -> i32 {
+fn part1(init_player: &Player, init_boss: &Boss, part2: bool) -> i32 {
     let start = Instant::now();
 
     let spells: Vec<Spell> = vec![ 
@@ -159,7 +167,7 @@ fn part1(init_player: &Player, init_boss: &Boss) -> i32 {
     let mut spend = 0;
     let mut minimum_spend = std::i32::MAX;
 
-    battle(1, &mut player, &mut boss, &mut active_spells, &spells, &mut spend, &mut minimum_spend);
+    battle(1, part2, &mut player, &mut boss, &mut active_spells, &spells, &mut spend, &mut minimum_spend);
     
     let dur = start.elapsed();
     println!("Duration = {:?}", dur);
@@ -171,8 +179,10 @@ fn main() {
     const BOSS: Boss = Boss { hp: 51, damage: 9 };
     const PLAYER: Player = Player { hp: 50, mana: 500, armor: 0 };
     
-    let min = part1(&PLAYER, &BOSS);
+    let min = part1(&PLAYER, &BOSS, false);
     println!("min to win is {}", min);
+    let min2 = part1(&PLAYER, &BOSS, true);
+    println!("min2 to win is {}", min2);
 }
 
 #[cfg(test)]
@@ -185,7 +195,7 @@ mod tests {
     fn test1() {
         const PLAYER: Player = Player { hp: 10, mana: 250, armor: 0 };
         const BOSS: Boss = Boss { hp: 13, damage: 8 };
-        let min = part1(&PLAYER, &BOSS);
+        let min = part1(&PLAYER, &BOSS, false);
         assert_eq!(226, min);
     }
 
@@ -193,7 +203,7 @@ mod tests {
     fn test1b() {
         const PLAYER: Player = Player { hp: 10, mana: 250, armor: 0 };
         const BOSS: Boss = Boss { hp: 14, damage: 8 };
-        let min = part1(&PLAYER, &BOSS);
+        let min = part1(&PLAYER, &BOSS, false);
         assert_eq!(641, min);
     }
 }
