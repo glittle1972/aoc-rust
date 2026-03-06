@@ -58,6 +58,8 @@ fn part1(filepath: &str, groups: u32) -> u64 {
 fn main() {
     let result1 = part1("input.txt", 3);
     println!("result1 is {}", result1);
+    let result2 = part1("input.txt", 4);
+    println!("result2 is {}", result2);
 }
 
 #[cfg(test)]
@@ -68,6 +70,12 @@ mod tests {
     fn test1() {
         let result1= part1("test.txt", 3);
         assert_eq!(99, result1);
+    }
+
+    #[test]
+    fn test2() {
+        let result1= part1("test.txt", 4);
+        assert_eq!(44, result1);
     }
 
 }
