@@ -162,12 +162,12 @@ fn parse_lines(lines: String, ops: &mut Vec<Box<dyn Op>>) {
     }
 }
 
-fn part1(filepath: &str) -> i32 {
+fn part1(filepath: &str, initial: (i32, i32)) -> i32 {
     let start = Instant::now();
 
     let mut registers: HashMap<char, i32> = HashMap::new();
-    registers.insert('a', 0);
-    registers.insert('b', 0);
+    registers.insert('a', initial.0);
+    registers.insert('b', initial.1);
     let mut ops = vec![];
 
     let contents = fs::read_to_string(filepath)
@@ -188,8 +188,10 @@ fn part1(filepath: &str) -> i32 {
 }
 
 fn main() {
-    let result1 = part1("input.txt");
+    let result1 = part1("input.txt", (0, 0));
     println!("result1 is {}", result1);
+    let result2 = part1("input.txt", (1, 0));
+    println!("result2 is {}", result2);
 }
 
 #[cfg(test)]
@@ -198,7 +200,7 @@ mod tests {
 
     #[test]
     fn test1() {
-        let result1= part1("test.txt");
+        let result1= part1("test.txt", (0, 0));
         assert_eq!(0, result1);
     }
 
