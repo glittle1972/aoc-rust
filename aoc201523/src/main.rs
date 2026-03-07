@@ -1,163 +1,73 @@
-use std::fs;
-use std::collections::HashMap;
-use std::time::Instant;
+use std::{collections::HashMap, fs, time::Instant};
 
 use regex::Regex;
 
-trait Op {
-    /**
-     * Update the registers' values as defined by the Op,
-     * and return any offset (may be negative)
-     */
-    fn exec(&self, registers: &mut HashMap<char, i32>) -> i32;
+#[derive(Debug, Clone, Copy)]
+enum Op {
+    Hlf(char),
+    Tpl(char),
+    Inc(char),
+    Jmp(i32),
+    Jie(char, i32),
+    Jio(char, i32),
 }
 
-struct Hlf {
-    register: char,
-}
-
-impl Hlf {
-    fn new(register: char) -> Box<dyn Op> {
-        return Box::new(Hlf { register });
-    }
-}
-
-impl Op for Hlf {
+impl Op {
+    /// Execute the operation, updating `registers` and returning the instruction pointer offset.
     fn exec(&self, registers: &mut HashMap<char, i32>) -> i32 {
-        println!("Hlf.exec({})", self.register);
-        registers.insert(self.register, registers.get(&self.register).unwrap() / 2);
-        return 1;
-    }
-}
-
-struct Tpl {
-    register: char,
-}
-
-impl Tpl {
-    fn new(register: char) -> Box<dyn Op> {
-        return Box::new(Tpl { register });
-    }
-}
-
-impl Op for Tpl {
-    fn exec(&self, registers: &mut HashMap<char, i32>) -> i32 {
-        println!("Tpl.exec({})", self.register);
-        registers.insert(self.register, registers.get(&self.register).unwrap() * 3);
-        return 1;
-    }
-}
-
-struct Inc {
-    register: char,
-}
-
-impl Inc {
-    fn new(register: char) -> Box<dyn Op> {
-        return Box::new(Inc { register });
-    }
-}
-
-impl Op for Inc {
-    fn exec(&self, registers: &mut HashMap<char, i32>) -> i32 {
-        println!("Inc.exec({})", self.register);
-        registers.insert(self.register, registers.get(&self.register).unwrap() + 1);
-        return 1;
-    }
-}
-
-struct Jmp {
-    offset: i32,
-}
-
-impl Jmp {
-    fn new(offset: i32) -> Box<dyn Op> {
-        return Box::new(Jmp { offset });
-    }
-}
-
-impl Op for Jmp {
-    fn exec(&self, _registers: &mut HashMap<char, i32>) -> i32 {
-        println!("Jmp.exec({})", self.offset);
-        return self.offset;
-    }
-}
-
-struct Jie {
-    register: char,
-    offset: i32,
-}
-
-impl Jie {
-    fn new(register: char, offset: i32) -> Box<dyn Op> {
-        return Box::new(Jie { register, offset });
-    }
-}
-
-impl Op for Jie {
-    fn exec(&self, registers: &mut HashMap<char, i32>) -> i32 {
-        println!("Jie.exec({}, {})", self.register, self.offset);
-        if registers.get(&self.register).unwrap() % 2 == 0 {
-            return self.offset;
-        } else {
-            return 1;
+        match *self {
+            Op::Hlf(r) => {
+                let v = *registers.get(&r).unwrap_or(&0) / 2;
+                registers.insert(r, v);
+                1
+            }
+            Op::Tpl(r) => {
+                let v = *registers.get(&r).unwrap_or(&0) * 3;
+                registers.insert(r, v);
+                1
+            }
+            Op::Inc(r) => {
+                let v = *registers.get(&r).unwrap_or(&0) + 1;
+                registers.insert(r, v);
+                1
+            }
+            Op::Jmp(off) => off,
+            Op::Jie(r, off) => {
+                if registers.get(&r).unwrap_or(&0) % 2 == 0 {
+                    off
+                } else {
+                    1
+                }
+            }
+            Op::Jio(r, off) => {
+                if *registers.get(&r).unwrap_or(&0) == 1 {
+                    off
+                } else {
+                    1
+                }
+            }
         }
     }
 }
 
-struct Jio {
-    register: char,
-    offset: i32,
-}
-
-impl Jio {
-    fn new(register: char, offset: i32) -> Box<dyn Op> {
-        return Box::new(Jio { register, offset });
-    }
-}
-
-impl Op for Jio {
-    fn exec(&self, registers: &mut HashMap<char, i32>) -> i32 {
-        println!("Jio.exec({}, {})", self.register, self.offset);
-        if *registers.get(&self.register).unwrap() == 1 {
-            return self.offset;
-        } else {
-            return 1;
-        }
-    }
-}
-
-struct Noop { }
-
-impl Noop {
-    fn new() -> Box<dyn Op> {
-        return Box::new(Noop {});
-    }
-}
-
-impl Op for Noop {
-    fn exec(&self, _registers: &mut HashMap<char, i32>) -> i32 {
-        println!("Noop.exec()");
-        return 0;
-    }
-}
-
-fn parse_lines(lines: String, ops: &mut Vec<Box<dyn Op>>) {
-    let re = Regex::new(r"^(?<op>[a-z]{3}) (?<reg>[a-z]{0,1})(?:, ){0,1}(?<off>[+-][0-9]+){0,1}$").unwrap();
+fn parse_lines(lines: String, ops: &mut Vec<Op>) {
+    let re = Regex::new(r"^(?P<op>[a-z]{3}) (?P<reg>[a-z]?)(?:, )?(?P<off>[+-][0-9]+)?$").unwrap();
     for line in lines.lines() {
         let caps = re.captures(line).unwrap();
-        let name = caps.name("op").map_or("noop", |m| m.as_str());
-        let register = caps.name("reg").map_or('z', |m| m.as_str().chars().next().unwrap_or('z'));
-        let offset = caps.name("off").map_or(0, |m| m.as_str().parse::<i32>().unwrap());
+        let name = caps.name("op").unwrap().as_str();
+        let reg_opt = caps.name("reg").and_then(|m| m.as_str().chars().next());
+        let off_opt = caps.name("off").map(|m| m.as_str().parse::<i32>().unwrap());
+
         let op = match name {
-            "hlf" => Hlf::new(register),
-            "tpl" => Tpl::new(register),
-            "inc" => Inc::new(register),
-            "jmp" => Jmp::new(offset),
-            "jie" => Jie::new(register, offset),
-            "jio" => Jio::new(register, offset),
-            _ => Noop::new(),
+            "hlf" => match reg_opt { Some(r) => Op::Hlf(r), None => continue },
+            "tpl" => match reg_opt { Some(r) => Op::Tpl(r), None => continue },
+            "inc" => match reg_opt { Some(r) => Op::Inc(r), None => continue },
+            "jmp" => Op::Jmp(off_opt.unwrap_or(0)),
+            "jie" => match (reg_opt, off_opt) { (Some(r), Some(o)) => Op::Jie(r, o), _ => continue },
+            "jio" => match (reg_opt, off_opt) { (Some(r), Some(o)) => Op::Jio(r, o), _ => continue },
+            _ => continue,
         };
+
         ops.push(op);
     }
 }
@@ -168,23 +78,21 @@ fn part1(filepath: &str, initial: (i32, i32)) -> i32 {
     let mut registers: HashMap<char, i32> = HashMap::new();
     registers.insert('a', initial.0);
     registers.insert('b', initial.1);
-    let mut ops = vec![];
+    let mut ops: Vec<Op> = Vec::new();
 
-    let contents = fs::read_to_string(filepath)
-        .expect("Could not read file");    
+    let contents = fs::read_to_string(filepath).expect("Could not read file");
     parse_lines(contents, &mut ops);
 
-    let mut pos = 0;
-    while pos < ops.len() {
-        let offset = ops[pos].exec(&mut registers);
-        let ipos = (pos as i32) + offset;
-        pos = ipos.try_into().unwrap();
+    let mut pos: i32 = 0;
+    while (pos as usize) < ops.len() {
+        let offset = ops[pos as usize].exec(&mut registers);
+        pos += offset;
     }
 
     let dur = start.elapsed();
     println!("Duration = {:?}", dur);
 
-    return *registers.get(&'b').unwrap();
+    *registers.get(&'b').unwrap_or(&0)
 }
 
 fn main() {
@@ -200,8 +108,7 @@ mod tests {
 
     #[test]
     fn test1() {
-        let result1= part1("test.txt", (0, 0));
+        let result1 = part1("test.txt", (0, 0));
         assert_eq!(0, result1);
     }
-
 }
