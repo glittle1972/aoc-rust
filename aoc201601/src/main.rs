@@ -22,7 +22,7 @@ struct Step {
 
 fn main() {
     let result = part1("input.txt");
-    println!("Result is {result}");
+    println!("Result is {result:?}");
 }
 
 fn turn(heading: i16, turn: Turn) -> i16 {
@@ -53,7 +53,25 @@ fn parse_line(line: String, steps: &mut Vec<Step>) {
     }
 }
 
-fn part1(filepath: &str) ->  i16 {
+// Technically, the end of the previous line, and the start of the
+// current intersect, but we don;t want to count this. So, start
+// from the third line, and stop at c - 2.
+fn find_first_insersection(lines: &Vec<Line>) -> Option<Position> {
+    let size = lines.len();
+    for cur in 2..size {
+        for prev in 0..cur - 1 {
+            let cur = lines.get(cur).unwrap();
+            let prev = lines.get(prev).unwrap();
+            match cur.find_intersection(prev) {
+                Some(intersection) => return Some(intersection),
+                None => ()
+            }
+        }
+    }
+    None
+}
+
+fn part1(filepath: &str) ->  (i16, i16) {
     let contents = fs::read_to_string(filepath)
         .expect("Could not read file");
     
@@ -72,7 +90,12 @@ fn part1(filepath: &str) ->  i16 {
         lines.push(line);
     }
 
-    pos.get_x().abs() + pos.get_y().abs()
+    let intersection = match find_first_insersection(&lines) {
+        Some(intersection) => intersection,
+        None => Position::new(0, 0)
+    };
+
+    (pos.get_block_distance(), intersection.get_block_distance())
 }
 
 #[cfg(test)]
@@ -83,12 +106,14 @@ mod tests {
     #[test]
     fn test1() {
         let mut tests = HashMap::new();
-        tests.insert("test1.txt", 5);
-        tests.insert("test2.txt", 2);
-        tests.insert("test3.txt", 12);
-        for (_filepath, expected) in tests {
-            let result= part1(_filepath);
+        tests.insert("test1.txt", (5, 0));
+        tests.insert("test2.txt", (2, 0));
+        tests.insert("test3.txt", (12, 0));
+        tests.insert("test4.txt", (8, 4));
+        for (filepath, expected) in tests {
+            let result= part1(filepath);
             assert_eq!(expected, result);
         }
     }
+
 }
