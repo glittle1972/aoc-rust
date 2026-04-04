@@ -1,15 +1,23 @@
 
+mod position;
+mod vector;
+mod line;
+
 use std::fs;
 
+use position::Position;
+use line::Line;
+
+/**
+ * OK, for part 2, we need to do vector intersections. At least it's simplified
+ * up/down,left/right only. Create a vector struct with add an intersects and
+ * getEnd() methods.
+ * 
+ */
 enum Turn { Left, Right, None }
-enum Direction { North, South, East, West }
 struct Step {
     turn: Turn,
     dist: i16
-}
-struct Position {
-    x: i16,
-    y: i16
 }
 
 fn main() {
@@ -17,46 +25,13 @@ fn main() {
     println!("Result is {result}");
 }
 
-fn turn(current: &Direction, turn: Turn) -> Direction {
-    match current {
-        Direction::North => {
-            match turn {
-                Turn::Left => Direction::West,
-                Turn::Right => Direction::East,
-                _ => Direction::North
-            }
-        },
-        Direction::South => {
-            match turn {
-                Turn::Left => Direction::East,
-                Turn::Right => Direction::West,
-                _ => Direction::South
-            }
-        },
-        Direction::East => {
-            match turn {
-                Turn::Left => Direction::North,
-                Turn::Right => Direction::South,
-                _ => Direction::East
-            }
-        },
-        _ => {
-            match turn {
-                Turn::Left => Direction::South,
-                Turn::Right => Direction::North,
-                _ => Direction::West
-            }
-        }
-    }
-}
-
-fn travel(current: &Direction, dist: i16, pos: Position) -> Position {
-    match current {
-        Direction::North => Position { x: pos.x, y: pos.y + dist },
-        Direction::South => Position { x: pos.x, y: pos.y - dist },
-        Direction::East => Position { x: pos.x + dist, y: pos.y },
-        _ => Position { x: pos.x - dist, y: pos.y }
-    }
+fn turn(heading: i16, turn: Turn) -> i16 {
+    let heading = match turn {
+        Turn::Left => heading - 90,
+        Turn::Right => heading + 90,
+        _ => heading
+    };
+    (heading + 360) % 360
 }
 
 fn parse_step(step: &str) -> Step {
@@ -78,21 +53,26 @@ fn parse_line(line: String, steps: &mut Vec<Step>) {
     }
 }
 
-fn part1(filepath: &str) -> i16 {
+fn part1(filepath: &str) ->  i16 {
     let contents = fs::read_to_string(filepath)
         .expect("Could not read file");
     
+    let mut lines = vec![];
+    
     let mut steps = vec![];
     parse_line(contents, &mut steps);
-    let mut current = Direction::North;
-    let mut pos = Position { x: 0, y: 0 };
+    
+    let mut heading = 0;
+    let mut pos = Position::new(0, 0);
     
     for step in steps {
-        current = turn(&current, step.turn);
-        pos = travel(&current, step.dist, pos);
+        heading = turn(heading, step.turn);
+        let line = Line::new_from_heading(pos, heading, step.dist);
+        pos = line.get_end();
+        lines.push(line);
     }
 
-    pos.x.abs() + pos.y.abs()
+    pos.get_x().abs() + pos.get_y().abs()
 }
 
 #[cfg(test)]
