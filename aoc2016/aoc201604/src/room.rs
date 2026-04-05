@@ -47,4 +47,26 @@ impl<'a> Room<'a> {
     pub fn check(&self) -> bool {
         self.chk.cmp(&self.calculate_checksum()) == Ordering::Equal
     }
+
+    fn decrypt_char(&self, b: &u8) -> u8 {
+        if *b == 45 {
+            return 32;
+        }
+        
+        let mut a = *b - 97;
+        let shift = (self.sid % 26) as u8;
+        a += shift;
+        a %= 26;
+        a += 97;
+
+        a
+    }
+    
+    pub fn decrypt(&self) -> String {
+        let mut result = String::new();
+        for b in self.name.as_bytes() {
+            result.push(self.decrypt_char(b) as char);
+        }
+        result
+    }
 }
