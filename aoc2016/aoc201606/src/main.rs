@@ -16,7 +16,7 @@ fn parse_contents(contents: String, strings: &mut Vec<String>) {
  * Return the most common character at index position from the list
  * of strings.
  */
-fn get_most_common(strings: &Vec<String>, index: usize) -> char {
+fn get_most_and_least_common(strings: &Vec<String>, index: usize) -> (char, char) {
     let mut counts = HashMap::new();
     for string in strings {
         let c = match string.chars().nth(index) {
@@ -25,12 +25,17 @@ fn get_most_common(strings: &Vec<String>, index: usize) -> char {
         };
         *counts.entry(c).or_insert(0) += 1;
     }
-    *counts.iter()
+    let most = *counts.iter()
         .max_by(|a, b| a.1.cmp(&b.1))
-        .map(|(k, _v)| k).unwrap()
+        .map(|(k, _v)| k).unwrap();
+    let least = *counts.iter()
+        .min_by(|a, b| a.1.cmp(&b.1))
+        .map(|(k, _v)| k).unwrap();
+
+    (most, least)
 }
 
-fn part1(filepath: &str) -> String {
+fn part1(filepath: &str) -> (String, String) {
     let contents = fs::read_to_string(filepath)
         .expect("Could not read file");
     
@@ -43,12 +48,15 @@ fn part1(filepath: &str) -> String {
         None => 0
     };
     
-    let mut result = vec![];
+    let mut most = vec![];
+    let mut least = vec![];
     for index in 0..length {
-        result.push(get_most_common(&strings, index));
+        let (m, l) = get_most_and_least_common(&strings, index);
+        most.push(m);
+        least.push(l);
     }
     
-    result.iter().collect::<String>()
+    (most.iter().collect::<String>(), least.iter().collect::<String>())
 }
 
 #[cfg(test)]
@@ -57,9 +65,11 @@ mod tests {
 
     #[test]
     fn test1() {
-        static EXPECTED: &str = "easter";
-        let result= part1("test.txt");
-        assert_eq!(EXPECTED, result);
+        static EXPECTED1: &str = "easter";
+        static EXPECTED2: &str = "advent";
+        let (most, least) = part1("test.txt");
+        assert_eq!(EXPECTED1, most);
+        assert_eq!(EXPECTED2, least);
     }
 
 }
